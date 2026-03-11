@@ -37,6 +37,7 @@ contract FeeAggregator is
   using EnumerableSet for EnumerableSet.UintSet;
   using EnumerableBytesSet for EnumerableBytesSet.BytesSet;
 
+
   /// @notice This event is emitted when an asset is removed from the allowlist
   /// @param asset The address of the asset that was removed from the allowlist
   event AssetRemovedFromAllowlist(address asset);
