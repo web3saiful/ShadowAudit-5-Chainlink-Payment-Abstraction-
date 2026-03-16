@@ -20,6 +20,19 @@ import {Client} from "@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client.s
 import {ITypeAndVersion} from "@chainlink/contracts/src/v0.8/shared/interfaces/ITypeAndVersion.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
+
+
+
+/*@audit-info 
+Collect Fees
+↓
+Hold Assets
+↓
+Send assets for swap
+↓
+Bridge assets to other chains */
+
+
 /// @notice Contract which accrues assets and enables transferring out assets for swapping and further settlement to
 /// swapper roles.
 /// The contract enables opt-in support to receive assets from other chains via CCIP,

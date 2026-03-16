@@ -136,8 +136,8 @@ contract SwapAutomator is ITypeAndVersion, PausableWithAccessControl, Automation
 
   /// @notice Contains the swap parameters for a list of assets
   struct AssetSwapParamsArgs {
-    address[] assets; // The list of assets
-    SwapParams[] assetsSwapParams; // The list of swap parameters
+    address[] assets; // The list of assets //@audit-info [USDC, WETH]
+    SwapParams[] assetsSwapParams; // The list of swap parameters   //@audit-info USDC → paramsForUSDC,, WETH → paramsForWETH
   }
 
   /// @inheritdoc ITypeAndVersion
@@ -146,18 +146,18 @@ contract SwapAutomator is ITypeAndVersion, PausableWithAccessControl, Automation
   /// @dev The threshold is set to 1 day to match the Chainlink feeds heartbeat requirement
   uint256 private constant STALENESS_THRESHOLD = 1 days;
   /// @notice The number of decimals for the LINK token
-  uint256 private constant LINK_DECIMALS = 18;
+  uint256 private constant LINK_DECIMALS = 18;  //@audit-info 1 LINK = 1e18
   /// @notice The lower bound for the deadline delay
-  uint96 private constant MIN_DEADLINE_DELAY = 1 minutes;
+  uint96 private constant MIN_DEADLINE_DELAY = 1 minutes;  //@audit-info Swap transaction কমপক্ষে 1 minute valid থাকবে।
   /// @notice The upper bound for the deadline delay
-  uint96 private constant MAX_DEADLINE_DELAY = 1 hours;
+  uint96 private constant MAX_DEADLINE_DELAY = 1 hours; //?@audit-info Swap transaction 1 hour এর বেশি valid হতে পারবে না।
 
   /// @notice The link token
-  LinkTokenInterface private immutable i_linkToken;
+  LinkTokenInterface private immutable i_linkToken;  //@audit-info LINK token address,, LINK = 0x514910771AF9Ca656af840dff83E8264EcF986CA
   /// @notice The address of the chainlink USD oracle
-  AggregatorV3Interface private immutable i_linkUsdFeed;
+  AggregatorV3Interface private immutable i_linkUsdFeed;   //@audit-info এটা হলো LINK/USD price oracle।
   /// @notice The address of the Uniswap router
-  IV3SwapRouter private immutable i_uniswapRouter;
+  IV3SwapRouter private immutable i_uniswapRouter;   //@audit-info 1000 USDC → LINK
   /// @notice The address of the Uniswap QuoterV2
   IQuoterV2 private immutable i_uniswapQuoterV2;
 
@@ -687,3 +687,9 @@ contract SwapAutomator is ITypeAndVersion, PausableWithAccessControl, Automation
     }
   }
 }
+
+
+  /*@audit-info
+  ex:  FeeAggregator balance = 1000 USDC
+USDC price = $1
+LINK price = $10*/
