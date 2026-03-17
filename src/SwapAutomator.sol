@@ -32,43 +32,43 @@ contract SwapAutomator is ITypeAndVersion, PausableWithAccessControl, Automation
 
   /// @notice This event is emitted when the LINK token address is set
   /// @param linkToken The LINK token address
-  event LinkTokenSet(address indexed linkToken);
+  event LinkTokenSet(address indexed linkToken);  //@audit-info Contract বলছে: LINK token address set করা হয়েছে
   /// @notice This event is emitted when the LINK/USD price feed address is set
   /// @param linkUsdFeed The address of the LINK/USD price feed
-  event LINKUsdFeedSet(address indexed linkUsdFeed);
+  event LINKUsdFeedSet(address indexed linkUsdFeed);  //@audit-info LINK/USD price feed connect করা হয়েছে → e.g., Chainlink feed address
   /// @notice This event is emitted when the Uniswap Router address is set
   /// @param uniswapRouter The address of the Uniswap Router
-  event UniswapRouterSet(address indexed uniswapRouter);
+  event UniswapRouterSet(address indexed uniswapRouter);  //@audit-info token swap করতে
   /// @notice This event is emitted when the Uniswap Quoter V2 address is set
   /// @param uniswapQuoterV2 The address of the Uniswap QuoterV2
-  event UniswapQuoterV2Set(address indexed uniswapQuoterV2);
+  event UniswapQuoterV2Set(address indexed uniswapQuoterV2);  //@audit-info swap করলে কত token পাবি — সেটা calculate করে
   /// @notice This event is emitted when a new forwarder is set
   /// @param forwarder The address of the new forwarder
-  event ForwarderSet(address forwarder);
+  event ForwarderSet(address forwarder);  //@audit-info Forwarder address যিনি automation চালাবেন → 0xForwarder
   /// @notice This event is emitted when a new fee aggregator receiver
   /// is set
   /// @param feeAggregator The address of the fee aggregator
   event FeeAggregatorSet(address feeAggregator);
   /// @notice This event is emitted when an asset is converted to LINK
-  /// @param recipient The address that received the swapped LINK
-  /// @param asset The address of the asset
-  /// @param amountIn The amount of assets converted to LINK
-  /// @param amountOut The amount of LINK received after swapping
+  /// @param recipient The address that received the swapped LINK  //@audit-info যে address শেষ পর্যন্ত LINK পেল
+  /// @param asset The address of the asset   //@audit-info কোন token swap করা হয়েছে
+  /// @param amountIn The amount of assets converted to LINK   //@audit-info কত asset দেওয়া হয়েছে
+  /// @param amountOut The amount of LINK received after swapping  //@audit-info কত LINK পাওয়া গেছে
   event AssetSwapped(address indexed recipient, address indexed asset, uint256 amountIn, uint256 amountOut);
   /// @notice This event is emitted when new swap parameters are set for an asset
   /// @param asset The address of the asset
   /// @param params The swap parameters
-  event AssetSwapParamsUpdated(address asset, SwapParams params);
+  event AssetSwapParamsUpdated(address asset, SwapParams params);  //@audit-info USDC → swap to LINK
   /// @notice This event is emitted when swap parameters are removed for an asset
   /// @param asset The address of the asset
-  event AssetSwapParamsRemoved(address asset);
+  event AssetSwapParamsRemoved(address asset); //@audit-info কোনো asset-এর swap parameters remove করা হয়েছে।,, অর্থাৎ এখন থেকে সেই asset আর automatic LINK swap হবে না, কারণ rules gone।
   /// @notice This event is emitted when a new deadline delay is set
   /// @param newDeadlinDelay The new deadline delay
   event DeadlineDelaySet(uint96 newDeadlinDelay);
   /// @notice This event is emitted when as swap fails
   /// @param asset The address of the asset that failed to swap
-  /// @param swapInput The swap input that failed
-  event AssetSwapFailure(address indexed asset, IV3SwapRouter.ExactInputParams swapInput);
+  /// @param swapInput  The swap input that failed
+  event AssetSwapFailure(address indexed asset, IV3SwapRouter.ExactInputParams swapInput);//@audit-info কোনো asset → LINK swap করার চেষ্টা হয়েছিল, কিন্তু সেটা fail হয়েছে
   /// @notice This event is emitted when the address that will receive swapped
   /// LINK is set
   /// @param linkReceiver The address that will receive swapped LINK
@@ -76,33 +76,33 @@ contract SwapAutomator is ITypeAndVersion, PausableWithAccessControl, Automation
 
   /// @notice This error is thrown when the asset list and the swap params list
   /// have different lengths
-  error AssetsSwapParamsMismatch();
+  error AssetsSwapParamsMismatch();  //@audit-info assets[] আর swapParams[] array-এর length equal না
   /// @notice This error is thrown when max slippage parameter set is 0, or above 100%
   error InvalidSlippage();
   /// @notice This error is thrown when the max price deviation is set below the max slippage, or above 100%
-  error InvalidMaxPriceDeviation();
+  error InvalidMaxPriceDeviation();   //@audit-info এটা oracle price vs actual swap price difference tolerance
   /// @notice This error is thrown when trying to set an empty swap path
-  error EmptySwapPath();
+  error EmptySwapPath();    //@audit-info swap করার জন্য কোনো path দেওয়া হয়নি
   /// @notice This error is thrown trying to set the same deadline delay as the one already set
-  error DeadlineDelayNotUpdated();
+  error DeadlineDelayNotUpdated();   //@audit-info deadlineDelay = swap transaction কতক্ষণ valid থাকবে,, যদি একই value আবার set করতে চাও → error,, deadlineDelay = 300
   /// @notice This error is thrown when trying to set the deadline delay to a value lower than the
-  /// minimum threshold
-  error DeadlineDelayTooLow(uint96 deadlineDelay, uint96 minDeadlineDelay);
+  /// minimum threshold 
+  error DeadlineDelayTooLow(uint96 deadlineDelay, uint96 minDeadlineDelay);   //@audit-info Bot prepare করছে swap → sets deadline = now + 60s ,,block.timestamp <= deadline ✅
   /// @notice This error is thrown when trying to set the deadline delay to a value higher than the
   /// maximum threshold
-  error DeadlineDelayTooHigh(uint96 deadlineDelay, uint96 maxDeadlineDelay);
+  error DeadlineDelayTooHigh(uint96 deadlineDelay, uint96 maxDeadlineDelay);   //@audit-info maxDeadlineDelay = 3600 seconds (1 hour) ,,deadlineDelay = 7200 seconds (2 hours)
   /// @notice This error is thrown when trying to set the same LINK receiver as the one already set
-  error LinkReceiverNotUpdated();
+  error LinkReceiverNotUpdated();  //@audit-info Contract prevent করে একই LINK receiver পুনরায় set করা
   /// @notice This error is thrown when the transaction timestamp is greater than the deadline
-  error TransactionTooOld(uint256 timestamp, uint256 deadline);
+  error TransactionTooOld(uint256 timestamp, uint256 deadline);  //@audit-info block.timestamp = now + 30s ≤ deadline
   /// @notice This error is thrown when the swap path is invalid as compared to the swap path set by
   /// the Admin.
-  error InvalidSwapPath();
+  error InvalidSwapPath();  //@audit-info Magic Conveyor,,, Admin sets path in contract: USDC → WETH → LINK ,, Contract stores hash of this path → 0xabc123
   /// @notice This error is thrown when the recipent of the swap pram does not match the receiver's
   /// fee recipent address.
-  error FeeRecipientMismatch();
+  error FeeRecipientMismatch();  //@audit-info swapInput.recipient != s_linkReceiver
   /// @notice This error is thrown when all performed swaps have failed
-  error AllSwapsFailed();
+  error AllSwapsFailed();//@audit-info যদি সব swap একবারে fail হয়,,USDC swap fails (maybe pool liquidity low) ,,WETH swap fails (maybe slippage too high)
   /// @notice This error is thrown when the amount received from a swap is less than the minimum
   /// amount expected
   error InsufficientAmountReceived();
@@ -159,27 +159,27 @@ contract SwapAutomator is ITypeAndVersion, PausableWithAccessControl, Automation
   /// @notice The address of the Uniswap router
   IV3SwapRouter private immutable i_uniswapRouter;   //@audit-info 1000 USDC → LINK
   /// @notice The address of the Uniswap QuoterV2
-  IQuoterV2 private immutable i_uniswapQuoterV2;
+  IQuoterV2 private immutable i_uniswapQuoterV2;//@audit-info "1000 USDC দিলে কত LINK পাবো?"
 
   /// @notice The address will execute the automation job
-  address private s_forwarder;
+  address private s_forwarder;  //@audit-info Chainlink Automation forwarder
   /// @notice The maximum amount of seconds the swap transaction is valid for
-  uint96 private s_deadlineDelay;
+  uint96 private s_deadlineDelay;  //@audit-info 300 seconds
   /// @notice The fee aggregator
   IFeeAggregator private s_feeAggregator;
   /// @notice Mapping of assets to their swap parameters
   address private s_linkReceiver;
 
   /// @notice Mapping of assets to their swap parameters
-  mapping(address asset => SwapParams swapParams) private s_assetSwapParams;
+  mapping(address asset => SwapParams swapParams) private s_assetSwapParams;  //@audit-info প্রতিটা asset (token) এর জন্য swap rules store করে
   /// @notice Mapping of assets to their lastest swap timestamp
   mapping(address asset => uint256 latestSwapTimestamp) private s_latestSwapTimestamp;
   /// @notice Mapping of assets to their hashed swap path
-  mapping(address asset => bytes32 hashedSwapPath) private s_assetHashedSwapPath;
+  mapping(address asset => bytes32 hashedSwapPath) private s_assetHashedSwapPath;  //@audit-info if (hash(newPath) != storedHash),,    → update
 
   constructor(
     ConstructorParams memory params
-  ) PausableWithAccessControl(params.adminRoleTransferDelay, params.admin) {
+  ) PausableWithAccessControl(params.adminRoleTransferDelay, params.admin) {  //@audit-info Admin কে হবে → set করা,,Admin change করতে delay থাকবে → set করা
     if (
       params.linkToken == address(0) || params.linkUsdFeed == address(0) || params.uniswapRouter == address(0)
         || params.uniswapQuoterV2 == address(0)
@@ -187,13 +187,13 @@ contract SwapAutomator is ITypeAndVersion, PausableWithAccessControl, Automation
       revert Errors.InvalidZeroAddress();
     }
 
-    i_linkToken = LinkTokenInterface(params.linkToken);
+    i_linkToken = LinkTokenInterface(params.linkToken);   //@audit-info Chainlink (LINK) → token
     i_linkUsdFeed = AggregatorV3Interface(params.linkUsdFeed);
-    i_uniswapRouter = IV3SwapRouter(params.uniswapRouter);
-    i_uniswapQuoterV2 = IQuoterV2(params.uniswapQuoterV2);
-    _setFeeAggregator(params.feeAggregator);
-    _setDeadlineDelay(params.deadlineDelay);
-    _setLinkReceiver(params.linkReceiver);
+    i_uniswapRouter = IV3SwapRouter(params.uniswapRouter);  //@audit-info Contract জানে কোন route দিয়ে token swap হবে।,,1000 USDC → WETH → LINK
+    i_uniswapQuoterV2 = IQuoterV2(params.uniswapQuoterV2);  //@audit-info ইমাজিন করো এটা হলো price calculator before swap,
+    _setFeeAggregator(params.feeAggregator);  //@audit-info Contract জানে কোন FeeAggregator address থেকে assets pull করবে swap এর জন্য। ,,Example: FeeAggregator balance → 1000 USDC, 0.5 WETH
+    _setDeadlineDelay(params.deadlineDelay);//@audit-info 60 seconds → যদি swap 60 sec এর মধ্যে না হয়, revert
+    _setLinkReceiver(params.linkReceiver);//@audit-info Forwarder executes → LINK যাবে 0xLINKReceiver
     emit LinkTokenSet(params.linkToken);
     emit LINKUsdFeedSet(params.linkUsdFeed);
     emit UniswapRouterSet(params.uniswapRouter);
@@ -205,7 +205,7 @@ contract SwapAutomator is ITypeAndVersion, PausableWithAccessControl, Automation
   /// @dev precondition The contract must not be paused
   /// @dev precondition The forwarder address must not be the zero address
   /// @param forwarder the address to set
-  function setForwarder(
+  function setForwarder(//@audit-info  কেবল Admin পারে এই forwarder set করতে।,, 
     address forwarder
   ) external onlyRole(DEFAULT_ADMIN_ROLE) {
     if (forwarder == address(0)) {
@@ -217,6 +217,7 @@ contract SwapAutomator is ITypeAndVersion, PausableWithAccessControl, Automation
     s_forwarder = forwarder;
     emit ForwarderSet(forwarder);
   }
+
 
   /// @notice Sets and removes swap parameters for assets
   /// @dev precondition The caller must have the ASSET_ADMIN_ROLE
@@ -277,6 +278,19 @@ contract SwapAutomator is ITypeAndVersion, PausableWithAccessControl, Automation
       emit AssetSwapParamsUpdated(assetAddress, assetSwapParams);
     }
   }
+//---------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
 
   /// @notice Gets the swap params for an asset
   /// @param asset The address of the asset
@@ -437,6 +451,22 @@ contract SwapAutomator is ITypeAndVersion, PausableWithAccessControl, Automation
 
     emit LinkReceiverSet(linkReceiver);
   }
+
+//---------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   // ================================================================
   // │                Swap Logic And Automation                     │
