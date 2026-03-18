@@ -217,7 +217,7 @@ contract SwapAutomator is ITypeAndVersion, PausableWithAccessControl, Automation
     s_forwarder = forwarder;
     emit ForwarderSet(forwarder);
   }
-
+  
 
   /// @notice Sets and removes swap parameters for assets
   /// @dev precondition The caller must have the ASSET_ADMIN_ROLE
@@ -228,7 +228,7 @@ contract SwapAutomator is ITypeAndVersion, PausableWithAccessControl, Automation
   /// @dev precondition The assets maxSlippage must be greater than 0
   /// @param assetsToRemove The list of assets to remove swap parameters
   /// @param assetSwapParamsArgs The asset swap parameters arguments
-  function applyAssetSwapParamsUpdates(
+  function applyAssetSwapParamsUpdates(  //@audit-info  এই function = "Swap Rules Manager" ,,কোন token কিভাবে swap হবে → সেটার rule সেট / update / remove করে
     address[] calldata assetsToRemove,
     AssetSwapParamsArgs calldata assetSwapParamsArgs
   ) external onlyRole(Roles.ASSET_ADMIN_ROLE) {
@@ -278,18 +278,6 @@ contract SwapAutomator is ITypeAndVersion, PausableWithAccessControl, Automation
       emit AssetSwapParamsUpdated(assetAddress, assetSwapParams);
     }
   }
-//---------------------------------------------------------------------------------------------------------------------------
-
-
-
-
-
-
-
-
-
-
-
 
 
   /// @notice Gets the swap params for an asset
@@ -453,16 +441,6 @@ contract SwapAutomator is ITypeAndVersion, PausableWithAccessControl, Automation
   }
 
 //---------------------------------------------------------------------------------------------------------------------------
-
-
-
-
-
-
-
-
-
-
 
 
 

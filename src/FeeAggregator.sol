@@ -197,7 +197,7 @@ contract FeeAggregator is
 
   /// @inheritdoc IFeeAggregator
   function areAssetsAllowlisted(
-    address[] calldata assets
+    address[] calldata assets  //@audit-info (external input),,outside থেকে আসছে,,read-only,,gas efficient,,user যা পাঠায়, আমি শুধু পড়বো
   ) external view returns (bool areAllAssetsAllowlisted, address nonAllowlistedAsset) {
     for (uint256 i; i < assets.length; ++i) {
       if (!s_allowlistedAssets.contains(assets[i])) {
